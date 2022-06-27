@@ -1,0 +1,113 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id			Int      	@id @default(autoincrement())
+  email			String   	@unique
+  name         		String?
+  phoneticName 		String?
+  active       		Boolean  	@default(true)
+  role         		Role     	@default(USER)
+  folder       		String   	@default("misc")
+  birthday     		String?
+  createdDate  		DateTime 	@default(now())
+  updatedDate  		DateTime 	@default(now())
+
+  // non-db fields
+  logs  		Log[]
+  tracks 		Track[]
+}
+
+model Log {
+  id          		Int      	@id @default(autoincrement())
+  action      		String
+  message     		String?
+  createdBy   		Int?
+  createdDate 		DateTime 	@default(now())
+
+  // non-db fields
+  createdByUser 	User? 		@relation(fields: [createdBy], references: [id])
+
+  @@index([action])
+}
+
+model Track {
+  id          		Int       	@id @default(autoincrement())
+  path        		String
+  file        		String
+  filesize    		Int
+  title       		String?
+  artist      		String?
+  album       		String?
+  length      		Int
+  plays       		Int       	@default(0)
+  skips       		Int       	@default(0)
+  rating      		Int       	@default(0)
+  lastPlay    		DateTime?
+  spotifyId   		String?
+  createdBy   		Int?
+  createdDate 		DateTime  	@default(now())
+  updatedDate 		DateTime  	@default(now())
+
+  // non-db fields
+  genres        	TrackGenres[]
+  tags          	TrackTags[]
+  createdByUser 	User?         	@relation(fields: [createdBy], references: [id])
+}
+
+model Genre {
+  id          		Int      	@id @default(autoincrement())
+  genre       		String   	@unique
+  createdDate 		DateTime 	@default(now())
+  updatedDate 		DateTime 	@default(now())
+
+  // non-db fields
+  tracks 		TrackGenres[]
+
+  @@index([genre])
+}
+
+model TrackGenres {
+  trackId 		Int
+  genreId 		Int
+
+  // non-db fields
+  track 		Track 		@relation(fields: [trackId], references: [id])
+  genre 		Genre 		@relation(fields: [genreId], references: [id])
+
+  @@id([trackId, genreId])
+}
+
+model Tag {
+  id          		Int      	@id @default(autoincrement())
+  tag         		String   	@unique
+  createdDate 		DateTime 	@default(now())
+
+  // non-db fields
+  tracks    		TrackTags[]
+}
+
+model TrackTags {
+  trackId 		Int
+  tagId   		Int
+
+  // non-db fields
+  track 		Track 		@relation(fields: [trackId], references: [id])
+  tag   		Tag   		@relation(fields: [tagId], references: [id])
+
+  @@id([trackId, tagId])
+}
+
+enum Role {
+  USER
+  ADMIN
+}
